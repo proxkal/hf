@@ -1,8 +1,11 @@
-import { Arsenal_400Regular, Arsenal_700Bold } from '@expo-google-fonts/arsenal';
 import {
-  PlayfairDisplay_400Regular_Italic,
-  PlayfairDisplay_700Bold,
-} from '@expo-google-fonts/playfair-display';
+  Inter_400Regular,
+  Inter_500Medium,
+  Inter_600SemiBold,
+  Inter_700Bold,
+  Inter_800ExtraBold,
+} from '@expo-google-fonts/inter';
+import { PlayfairDisplay_400Regular_Italic } from '@expo-google-fonts/playfair-display';
 import { QueryClient, QueryClientProvider, useQueryClient } from '@tanstack/react-query';
 import { useFonts } from 'expo-font';
 import { Stack, useRouter, useSegments } from 'expo-router';
@@ -34,9 +37,11 @@ export default function RootLayout() {
       }),
   );
   const [fontsLoaded] = useFonts({
-    Arsenal_400Regular,
-    Arsenal_700Bold,
-    PlayfairDisplay_700Bold,
+    Inter_400Regular,
+    Inter_500Medium,
+    Inter_600SemiBold,
+    Inter_700Bold,
+    Inter_800ExtraBold,
     PlayfairDisplay_400Regular_Italic,
   });
   const status = useAuth((state) => state.status);
@@ -60,7 +65,8 @@ export default function RootLayout() {
       <Stack
         screenOptions={{
           headerTintColor: colors.black,
-          headerTitleStyle: { fontFamily: fonts.bodyBold },
+          headerTitleStyle: { fontFamily: fonts.bodyBold, fontSize: 17 },
+          headerShadowVisible: false,
           headerBackTitle: 'Retour',
           contentStyle: { backgroundColor: colors.white },
         }}>

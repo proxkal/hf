@@ -18,9 +18,15 @@ export default function TabsLayout() {
       screenOptions={{
         tabBarActiveTintColor: colors.blue,
         tabBarInactiveTintColor: colors.muted,
-        tabBarLabelStyle: { fontFamily: fonts.bodyBold, fontSize: 12 },
-        tabBarStyle: { height: 68, paddingTop: 6, paddingBottom: 10 },
-        headerTitleStyle: { fontFamily: fonts.title, fontSize: 22 },
+        tabBarLabelStyle: { fontFamily: fonts.semibold, fontSize: 12, letterSpacing: 0.2 },
+        tabBarStyle: {
+          height: 68,
+          paddingTop: 6,
+          paddingBottom: 10,
+          borderTopColor: colors.grey,
+        },
+        headerTitleStyle: { fontFamily: fonts.title, fontSize: 24, letterSpacing: -0.6 },
+        headerShadowVisible: false,
         headerTintColor: colors.black,
         sceneStyle: { backgroundColor: colors.white },
       }}>

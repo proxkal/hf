@@ -43,7 +43,7 @@ const styles = StyleSheet.create({
   pitch: {
     color: colors.white,
     textAlign: 'center',
-    fontFamily: fonts.titleItalic,
+    fontFamily: fonts.brandItalic,
     fontSize: 19,
     lineHeight: 28,
     maxWidth: 420,

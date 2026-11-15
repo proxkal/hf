@@ -13,7 +13,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { colors, fonts, maxWidth, radius, space } from '@/theme';
+import { colors, fonts, maxWidth, radius, space, typeScale } from '@/theme';
 
 /** Page plein écran, contenu centré et limité en largeur sur grand écran. */
 export function Screen({
@@ -234,12 +234,12 @@ const styles = StyleSheet.create({
     gap: space.md,
   },
   stack: { gap: space.md },
-  title: { fontFamily: fonts.title, fontSize: 32, lineHeight: 40, color: colors.black },
-  heading: { fontFamily: fonts.bodyBold, fontSize: 20, lineHeight: 26, color: colors.black },
-  p: { fontFamily: fonts.body, fontSize: 16, lineHeight: 23, color: colors.black },
+  title: { ...typeScale.title, color: colors.black },
+  heading: { ...typeScale.heading, color: colors.black },
+  p: { ...typeScale.body, color: colors.black },
   muted: { color: colors.muted },
   button: {
-    minHeight: 50,
+    minHeight: 52,
     paddingHorizontal: space.lg,
     borderRadius: radius.pill,
     alignItems: 'center',
@@ -249,21 +249,20 @@ const styles = StyleSheet.create({
   button_secondary: { backgroundColor: colors.grey },
   button_inverse: { backgroundColor: colors.white },
   button_danger: { backgroundColor: colors.danger },
-  buttonLabel: { fontFamily: fonts.bodyBold, fontSize: 17 },
-  pressed: { opacity: 0.75 },
+  buttonLabel: { fontFamily: fonts.semibold, fontSize: 16, letterSpacing: -0.1 },
+  pressed: { opacity: 0.8, transform: [{ scale: 0.99 }] },
   inactive: { opacity: 0.45 },
   field: { gap: space.xs },
-  label: { fontFamily: fonts.bodyBold, fontSize: 15, color: colors.black },
+  label: { fontFamily: fonts.semibold, fontSize: 14, color: colors.black },
   input: {
-    minHeight: 50,
-    borderWidth: 1,
-    borderColor: colors.border,
+    minHeight: 52,
+    borderWidth: 0,
     borderRadius: radius.sm,
     paddingHorizontal: space.md,
     fontFamily: fonts.body,
     fontSize: 16,
     color: colors.black,
-    backgroundColor: colors.white,
+    backgroundColor: colors.grey,
   },
   hint: { fontFamily: fonts.body, fontSize: 13, color: colors.muted },
   chipRow: { flexDirection: 'row', flexWrap: 'wrap', gap: space.sm },
@@ -271,17 +270,15 @@ const styles = StyleSheet.create({
     minHeight: 38,
     paddingHorizontal: space.md,
     borderRadius: radius.pill,
-    borderWidth: 1,
-    borderColor: colors.border,
-    backgroundColor: colors.white,
+    backgroundColor: colors.grey,
     justifyContent: 'center',
   },
-  chipSelected: { backgroundColor: colors.black, borderColor: colors.black },
-  chipLabel: { fontFamily: fonts.body, fontSize: 15, color: colors.black },
-  chipLabelSelected: { color: colors.white, fontFamily: fonts.bodyBold },
+  chipSelected: { backgroundColor: colors.black },
+  chipLabel: { fontFamily: fonts.medium, fontSize: 14, color: colors.black },
+  chipLabelSelected: { color: colors.white, fontFamily: fonts.semibold },
   card: {
     borderWidth: 1,
-    borderColor: colors.border,
+    borderColor: colors.grey,
     borderRadius: radius.md,
     padding: space.md,
     gap: space.sm,
@@ -291,13 +288,13 @@ const styles = StyleSheet.create({
   tag: {
     alignSelf: 'flex-start',
     paddingHorizontal: space.sm,
-    paddingVertical: 3,
-    borderRadius: radius.sm,
+    paddingVertical: 4,
+    borderRadius: 6,
     backgroundColor: colors.grey,
   },
   tagBlue: { backgroundColor: colors.blue },
   tagBlack: { backgroundColor: colors.black },
-  tagLabel: { fontFamily: fonts.bodyBold, fontSize: 12, color: colors.black },
+  tagLabel: { ...typeScale.overline, fontSize: 11, letterSpacing: 0.8, color: colors.black },
   notice: { borderWidth: 1, borderRadius: radius.sm, padding: space.md },
   loader: { marginVertical: space.lg, textAlign: 'center' },
 });

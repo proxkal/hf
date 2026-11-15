@@ -50,7 +50,7 @@ export default function MapView({
   );
 }
 
-/** Petit point façon Uber : rond bleu pour un coach, carré noir pour un événement. */
+/** Petit pictogramme façon Uber : point bleu pour un coach, mini calendrier pour un événement. */
 function Dot({ point, active }: { point: MapPoint; active: boolean }) {
   return (
     <View style={styles.hit}>
@@ -58,8 +58,7 @@ function Dot({ point, active }: { point: MapPoint; active: boolean }) {
         style={[
           styles.dot,
           point.kind === 'coach' ? styles.coach : styles.event,
-          active && styles.active,
-          active && point.kind === 'coach' && styles.coachActive,
+          active && (point.kind === 'coach' ? styles.coachActive : styles.eventActive),
         ]}
       />
     </View>
@@ -83,7 +82,17 @@ const styles = StyleSheet.create({
     elevation: 3,
   },
   coach: { borderRadius: 7, backgroundColor: colors.blue },
-  event: { borderRadius: 4, backgroundColor: colors.black },
-  active: { width: 20, height: 20, borderWidth: 3 },
-  coachActive: { borderRadius: 10 },
+  /** Mini calendrier : bandeau bleu en haut, corps blanc cerclé de noir. */
+  event: {
+    width: 16,
+    height: 15,
+    borderRadius: 3,
+    borderWidth: 1.5,
+    borderColor: colors.black,
+    borderTopWidth: 4.5,
+    borderTopColor: colors.blue,
+    backgroundColor: colors.white,
+  },
+  coachActive: { width: 20, height: 20, borderWidth: 3, borderRadius: 10 },
+  eventActive: { width: 21, height: 20, borderTopWidth: 6 },
 });

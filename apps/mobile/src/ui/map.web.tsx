@@ -56,8 +56,9 @@ const BLUE_HALO = 'rgba(0,10,255,.55)';
  * on n'y applique jamais `position`, `transform`, `scale` ni `translate`, qui décaleraient
  * le pin de son point géographique.
  *
- * Pins façon Uber : un petit point de 14 px. La zone cliquable (le bouton, transparent)
- * fait 28 px pour rester facile à viser ; seul le point intérieur grossit au survol.
+ * Pins façon Uber : coach = petit point bleu de 14 px ; événement = mini calendrier
+ * (bandeau bleu, anneaux, cases) de 16 px. La zone cliquable (le bouton, transparent)
+ * fait 28 px pour rester facile à viser ; seul le pictogramme grossit au survol.
  */
 const CSS = `
 .hp{width:28px;height:28px;display:flex;align-items:center;justify-content:center;padding:0;
@@ -67,9 +68,19 @@ const CSS = `
 .hp-dot{position:relative;width:14px;height:14px;border:2.5px solid #fff;box-sizing:border-box;
   box-shadow:0 1px 4px rgba(0,0,0,.35);transition:width .15s ease,height .15s ease}
 .hp--coach .hp-dot{border-radius:50%;background:${colors.blue}}
-.hp--event .hp-dot{border-radius:4px;background:#000}
-.hp:hover .hp-dot,.hp--active .hp-dot{width:20px;height:20px;border-width:3px;
+.hp--coach:hover .hp-dot,.hp--coach.hp--active .hp-dot{width:20px;height:20px;border-width:3px;
   box-shadow:0 0 0 2px ${colors.blue}55,0 2px 8px rgba(0,0,0,.35)}
+.hp--event .hp-dot{width:16px;height:15px;border:1.5px solid #000;border-top:4.5px solid ${colors.blue};
+  border-radius:3px;background:#fff;box-shadow:0 0 0 2px #fff,0 1px 5px rgba(0,0,0,.4)}
+.hp--event .hp-dot::before{content:'';position:absolute;top:-7px;left:2.5px;width:2px;height:4px;
+  border-radius:1px;background:#000;box-shadow:6px 0 0 #000}
+.hp--event .hp-dot::after{content:'';position:absolute;left:2px;top:2px;width:2.5px;height:2.5px;
+  border-radius:.5px;background:#000;box-shadow:4px 0 0 #000,0 3.5px 0 #000}
+.hp--event:hover .hp-dot,.hp--event.hp--active .hp-dot{width:21px;height:20px;border-top-width:6px;
+  box-shadow:0 0 0 2px #fff,0 0 0 4px ${colors.blue}55,0 2px 8px rgba(0,0,0,.35)}
+.hp--event:hover .hp-dot::before,.hp--event.hp--active .hp-dot::before{top:-9px;left:4px;box-shadow:8px 0 0 #000}
+.hp--event:hover .hp-dot::after,.hp--event.hp--active .hp-dot::after{left:3px;top:3px;width:3px;height:3px;
+  box-shadow:5.5px 0 0 #000,0 4.5px 0 #000}
 .hp--coach .hp-dot::after{content:'';position:absolute;inset:-2.5px;border-radius:50%;
   animation:hp-pulse 2.4s ease-out infinite;pointer-events:none}
 .hp--active .hp-dot::after{animation:none}
@@ -80,7 +91,7 @@ const CSS = `
 
 /** Délai avant de masquer l'aperçu quand la souris quitte un pin (le temps d'atteindre la carte). */
 const HIDE_DELAY_MS = 180;
-const PREVIEW_WIDTH = 320;
+const PREVIEW_WIDTH = 260;
 /** Marge minimale entre l'aperçu et le bord de la carte. */
 const MARGIN = 10;
 /** En haut, l'aperçu laisse libres les filtres posés sur la carte. */

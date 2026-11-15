@@ -8,7 +8,7 @@ import {
   EVENT_LABELS,
   type EventItem,
 } from '@/lib/api';
-import { colors, fonts, radius, space, typeScale } from '@/theme';
+import { colors, fonts, space, typeScale } from '@/theme';
 
 import { Avatar, DateTile } from './badges';
 
@@ -100,10 +100,10 @@ export function CoachPreview({ coach, onOpen }: { coach: CoachSummary; onOpen: (
   const price = coach.fromPriceCents !== null ? ` · dès ${euros(coach.fromPriceCents)}` : '';
   const rating =
     coach.ratingCount > 0 ? `★ ${coach.ratingAvg.toFixed(1)} (${coach.ratingCount}) · ` : '';
-  const lines = [...coach.domains, ...coach.knownProcesses.map((p) => `Recrutement ${p}`)].slice(0, 3);
+  const lines = [...coach.domains, ...coach.knownProcesses.map((p) => `Recrutement ${p}`)].slice(0, 2);
   return (
     <Shell
-      media={<Avatar name={coach.displayName} size={64} />}
+      media={<Avatar name={coach.displayName} size={44} />}
       title={coach.displayName}
       overline={coach.headline}
       place={`${coach.city} · ${coach.distanceKm} km`}
@@ -120,13 +120,13 @@ export function EventPreview({ event, onOpen }: { event: EventItem; onOpen: () =
   const seats = event.seatsLeft !== null ? `${event.seatsLeft} places restantes` : 'Entrée libre';
   return (
     <Shell
-      media={<DateTile iso={event.startsAt} size={60} />}
+      media={<DateTile iso={event.startsAt} size={42} />}
       title={event.title}
       overline={EVENT_LABELS[event.type]}
       place={`${event.venue}, ${event.city}`}
       lines={[dateTime(event.startsAt), `Organisé par ${event.organizerName}`]}
       status={`${event.registered ? 'Tu es inscrit · ' : ''}${euros(event.priceCents)} · ${seats}`}
-      primary={event.registered ? 'Voir mon inscription' : "S'inscrire"}
+      primary={event.registered ? "Mon inscription" : "S'inscrire"}
       onPrimary={onOpen}
       onDirections={() => openDirections(event.lat, event.lng)}
     />
@@ -138,45 +138,45 @@ const styles = StyleSheet.create({
     backgroundColor: colors.white,
     borderWidth: 1,
     borderColor: colors.grey,
-    borderRadius: radius.lg,
-    padding: space.md + 2,
-    gap: space.md,
+    borderRadius: 8,
+    padding: space.sm + 4,
+    gap: space.sm,
     shadowColor: colors.black,
     shadowOpacity: 0.16,
-    shadowRadius: 24,
-    shadowOffset: { width: 0, height: 10 },
+    shadowRadius: 18,
+    shadowOffset: { width: 0, height: 8 },
     elevation: 8,
   },
-  header: { flexDirection: 'row', alignItems: 'center', gap: space.md },
-  headerText: { flex: 1, gap: 4 },
-  title: { fontFamily: fonts.title, fontSize: 20, lineHeight: 24, letterSpacing: -0.5, color: colors.black },
-  overline: { ...typeScale.overline, fontSize: 11, color: colors.blue },
-  placeRow: { flexDirection: 'row', alignItems: 'center', gap: space.sm },
+  header: { flexDirection: 'row', alignItems: 'center', gap: space.sm + 2 },
+  headerText: { flex: 1, gap: 2 },
+  title: { fontFamily: fonts.title, fontSize: 16, lineHeight: 20, letterSpacing: -0.3, color: colors.black },
+  overline: { ...typeScale.overline, fontSize: 9.5, lineHeight: 13, letterSpacing: 0.9, color: colors.blue },
+  placeRow: { flexDirection: 'row', alignItems: 'center', gap: 6 },
   placeIcon: {
-    width: 10,
-    height: 10,
-    borderRadius: 5,
-    borderWidth: 2,
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    borderWidth: 1.5,
     borderColor: colors.muted,
   },
-  place: { flex: 1, fontFamily: fonts.medium, fontSize: 14, color: colors.muted },
-  lines: { borderLeftWidth: 3, borderLeftColor: colors.blue, paddingLeft: space.md, gap: 6 },
-  line: { fontFamily: fonts.semibold, fontSize: 15, color: colors.black },
-  statusRow: { flexDirection: 'row', alignItems: 'center', gap: space.sm },
-  statusDot: { width: 9, height: 9, borderRadius: 5, backgroundColor: colors.blue },
-  status: { flex: 1, fontFamily: fonts.medium, fontSize: 14, color: colors.muted },
-  actions: { flexDirection: 'row', gap: space.sm },
+  place: { flex: 1, fontFamily: fonts.medium, fontSize: 12.5, color: colors.muted },
+  lines: { borderLeftWidth: 2, borderLeftColor: colors.blue, paddingLeft: space.sm + 2, gap: 3 },
+  line: { fontFamily: fonts.semibold, fontSize: 13, color: colors.black },
+  statusRow: { flexDirection: 'row', alignItems: 'center', gap: 6 },
+  statusDot: { width: 7, height: 7, borderRadius: 4, backgroundColor: colors.blue },
+  status: { flex: 1, fontFamily: fonts.medium, fontSize: 12, color: colors.muted },
+  actions: { flexDirection: 'row', gap: 6, marginTop: 2 },
   btn: {
     flex: 1,
-    minHeight: 44,
-    borderRadius: radius.pill,
+    minHeight: 34,
+    borderRadius: 6,
     alignItems: 'center',
     justifyContent: 'center',
-    paddingHorizontal: space.sm,
+    paddingHorizontal: space.xs,
   },
   btnPrimary: { backgroundColor: colors.blue },
   btnGhost: { borderWidth: 1, borderColor: colors.border },
-  btnLabel: { fontFamily: fonts.semibold, fontSize: 15, color: colors.black },
+  btnLabel: { fontFamily: fonts.semibold, fontSize: 13, color: colors.black },
   btnLabelPrimary: { color: colors.white },
   pressed: { opacity: 0.8 },
 });

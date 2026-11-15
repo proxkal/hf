@@ -317,7 +317,7 @@ export function EventCard({
 const styles = StyleSheet.create({
   mapFrame: {
     height: 480,
-    borderRadius: radius.lg,
+    borderRadius: 12,
     overflow: 'hidden',
     borderWidth: 1,
     borderColor: colors.grey,
@@ -373,7 +373,16 @@ const styles = StyleSheet.create({
   legend: { flexDirection: 'row', alignItems: 'center', gap: space.md, flexWrap: 'wrap' },
   legendItem: { flexDirection: 'row', alignItems: 'center', gap: 6 },
   legendCoach: { width: 12, height: 12, borderRadius: 6, backgroundColor: colors.blue },
-  legendEvent: { width: 12, height: 12, borderRadius: 3, backgroundColor: colors.black },
+  legendEvent: {
+    width: 13,
+    height: 12,
+    borderRadius: 2,
+    borderWidth: 1.5,
+    borderColor: colors.black,
+    borderTopWidth: 4,
+    borderTopColor: colors.blue,
+    backgroundColor: colors.white,
+  },
   legendLabel: { fontFamily: fonts.medium, fontSize: 13, color: colors.black },
   legendHint: { fontSize: 13, lineHeight: 18 },
   section: { gap: 2, marginTop: space.sm },

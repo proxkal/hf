@@ -1,0 +1,118 @@
+# HURDEN — pipeline DevSecOps (GitLab CI)
+#
+# Chaque merge request et chaque commit sur la branche par défaut passent par :
+#   1. qualité   : lint de l'API, typage de l'app (web + mobile)
+#   2. tests     : tests e2e de l'API contre un PostgreSQL éphémère
+#   3. sécurité  : SAST (Semgrep), détection de secrets (Gitleaks), audit des dépendances
+#
+# Aucun secret n'est stocké ici : le secret JWT des tests est généré à chaque job,
+# et le mot de passe PostgreSQL ne sert qu'au conteneur jetable du job.
+
+workflow:
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+    - if: $CI_COMMIT_BRANCH && $CI_OPEN_MERGE_REQUESTS
+      when: never
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+    - if: $CI_COMMIT_TAG
+
+stages:
+  - quality
+  - test
+  - security
+
+include:
+  - template: Jobs/SAST.gitlab-ci.yml
+  - template: Jobs/Secret-Detection.gitlab-ci.yml
+
+default:
+  image: node:24-alpine
+  interruptible: true
+
+variables:
+  npm_config_cache: "$CI_PROJECT_DIR/.npm"
+  npm_config_fund: "false"
+  npm_config_update_notifier: "false"
+  # Requis par `prisma generate` (postinstall) ; pointe vers le service des tests.
+  DATABASE_URL: "postgresql://hurden:ci_only_ephemeral@postgres:5432/hurden?schema=public"
+  # Passer à "true" pour un scan ponctuel de tout l'historique git.
+  SECRET_DETECTION_HISTORIC_SCAN: "false"
+  SAST_EXCLUDED_PATHS: "spec, test, tests, tmp, node_modules, apps/api/src/generated, apps/mobile/public"
+
+.api:
+  before_script:
+    - cd apps/api
+    - npm ci --prefer-offline
+  cache:
+    key:
+      files: [apps/api/package-lock.json]
+    paths: [.npm/]
+
+.mobile:
+  before_script:
+    - cd apps/mobile
+    - npm ci --prefer-offline
+  cache:
+    key:
+      files: [apps/mobile/package-lock.json]
+    paths: [.npm/]
+
+# ---------- 1. Qualité ----------
+
+api:lint:
+  extends: .api
+  stage: quality
+  script:
+    - npm run lint
+    - npm run build
+
+mobile:typecheck:
+  extends: .mobile
+  stage: quality
+  script:
+    - npm run typecheck
+
+# ---------- 2. Tests ----------
+
+api:e2e:
+  extends: .api
+  stage: test
+  services:
+    - name: postgres:17-alpine
+      alias: postgres
+  variables:
+    POSTGRES_DB: hurden
+    POSTGRES_USER: hurden
+    POSTGRES_PASSWORD: ci_only_ephemeral
+    NODE_ENV: test
+    CORS_ORIGINS: "http://localhost:8081"
+    API_PUBLIC_URL: "http://127.0.0.1:3000"
+    WEB_APP_URL: "http://localhost:8081"
+  script:
+    - export JWT_ACCESS_SECRET="$(node -e "console.log(require('crypto').randomBytes(48).toString('base64url'))")"
+    - npx prisma migrate deploy
+    - npm run test:e2e
+
+# ---------- 3. Sécurité ----------
+# SAST (semgrep-sast) et Secret Detection (secret_detection) viennent des modèles inclus.
+
+sast:
+  stage: security
+
+secret_detection:
+  stage: security
+
+# Audit des dépendances de production : échoue sur toute faille haute ou critique.
+deps:audit:api:
+  stage: security
+  image: node:24-alpine
+  script:
+    - cd apps/api
+    - npm audit --omit=dev --audit-level=high
+
+deps:audit:mobile:
+  stage: security
+  image: node:24-alpine
+  script:
+    - cd apps/mobile
+    - npm audit --omit=dev --audit-level=high

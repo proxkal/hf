@@ -91,20 +91,26 @@ api:e2e:
   script:
     - export JWT_ACCESS_SECRET="$(node -e "console.log(require('crypto').randomBytes(48).toString('base64url'))")"
     - npx prisma migrate deploy
+    # Les tests s'appuient sur les données de démonstration (coachs, événements…).
+    - npx prisma db seed
     - npm run test:e2e
 
 # ---------- 3. Sécurité ----------
 # SAST (semgrep-sast) et Secret Detection (secret_detection) viennent des modèles inclus.
+# `needs: []` : les analyses de sécurité tournent dès le départ, même si un test échoue.
 
 sast:
   stage: security
+  needs: []
 
 secret_detection:
   stage: security
+  needs: []
 
 # Audit des dépendances de production : échoue sur toute faille haute ou critique.
 deps:audit:api:
   stage: security
+  needs: []
   image: node:24-alpine
   script:
     - cd apps/api
@@ -112,6 +118,7 @@ deps:audit:api:
 
 deps:audit:mobile:
   stage: security
+  needs: []
   image: node:24-alpine
   script:
     - cd apps/mobile

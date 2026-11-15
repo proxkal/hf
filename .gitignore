@@ -1,0 +1,20 @@
+node_modules/
+dist/
+.expo/
+web-build/
+coverage/
+*.tsbuildinfo
+expo-env.d.ts
+
+# Secrets : ne jamais commiter
+.env
+.env.*
+!.env.example
+
+# Client Prisma généré
+apps/api/src/generated/
+
+# Données locales
+.pgdata/
+*.log
+.DS_Store

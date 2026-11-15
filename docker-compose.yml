@@ -1,0 +1,25 @@
+# Environnement de développement HURDEN : PostgreSQL.
+# Le stockage S3 des CV (MinIO ou équivalent) sera ajouté avec la fonction de dépôt de CV.
+# Les ports ne sont exposés que sur 127.0.0.1 : rien n'est joignable depuis le réseau.
+# Les identifiants ci-dessous sont des valeurs de DEV, à ne jamais réutiliser en production.
+services:
+  db:
+    image: postgres:17-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-hurden}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-hurden_dev_only}
+      POSTGRES_DB: ${POSTGRES_DB:-hurden}
+    ports:
+      - "127.0.0.1:5432:5432"
+    volumes:
+      - db_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-hurden} -d ${POSTGRES_DB:-hurden}"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+
+volumes:
+  db_data:

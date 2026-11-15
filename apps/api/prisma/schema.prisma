@@ -1,0 +1,308 @@
+// Schéma de données HURDEN.
+// Trois piliers : coaching de proximité, activités (événements, associations), bons plans.
+
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum Role {
+  STUDENT
+  COACH
+  ORGANIZER
+  ADMIN
+}
+
+enum ContractType {
+  STAGE
+  ALTERNANCE
+  BOTH
+}
+
+/// Statut de validation (profils coach, événements, bons plans : validés sous 48 h).
+enum ReviewStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+enum EventType {
+  MEETUP
+  CONFERENCE
+  JOB_DATING
+  WORKSHOP
+  NETWORKING
+}
+
+enum DealCategory {
+  BANK
+  INSURANCE
+  HOUSING
+  FOOD
+  DISCOUNT
+}
+
+enum BookingStatus {
+  REQUESTED
+  CONFIRMED
+  CANCELLED
+  COMPLETED
+}
+
+enum BookingMode {
+  IN_PERSON
+  VISIO
+}
+
+model User {
+  id           String    @id @default(uuid()) @db.Uuid
+  email        String    @unique
+  /// Hash Argon2id. Null pour un compte créé uniquement via OAuth.
+  passwordHash String?
+  firstName    String
+  lastName     String?
+  role         Role      @default(STUDENT)
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+  lastLoginAt  DateTime?
+  /// RGPD : preuve du consentement aux CGU et à la politique de confidentialité.
+  termsAcceptedAt DateTime?
+  termsVersion    String?
+
+  studentProfile StudentProfile?
+  coachProfile   CoachProfile?
+  refreshTokens  RefreshToken[]
+  oauthAccounts  OAuthAccount[]
+  bookings       Booking[]
+  registrations  EventRegistration[]
+  memberships    MembershipRequest[]
+  dealClicks     DealClick[]
+  oauthTickets   OAuthTicket[]
+}
+
+model OAuthAccount {
+  id             String   @id @default(uuid()) @db.Uuid
+  provider       String
+  providerUserId String
+  userId         String   @db.Uuid
+  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt      DateTime @default(now())
+
+  @@unique([provider, providerUserId])
+  @@index([userId])
+}
+
+/// Jeton de rafraîchissement : seul son hash SHA-256 est stocké.
+/// `familyId` regroupe une chaîne de rotations pour détecter la réutilisation d'un jeton volé.
+model RefreshToken {
+  id         String    @id @default(uuid()) @db.Uuid
+  tokenHash  String    @unique
+  familyId   String    @db.Uuid
+  userId     String    @db.Uuid
+  user       User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  expiresAt  DateTime
+  revokedAt  DateTime?
+  createdAt  DateTime  @default(now())
+
+  @@index([userId])
+  @@index([familyId])
+}
+
+model StudentProfile {
+  userId                String        @id @db.Uuid
+  user                  User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  domain                String
+  keywords              String[]
+  contractType          ContractType
+  cities                String[]
+  studyLevel            String?
+  school                String?
+  availableFrom         DateTime?     @db.Date
+  radiusKm              Int           @default(15)
+  onboardingCompletedAt DateTime?
+  updatedAt             DateTime      @updatedAt
+}
+
+model CoachProfile {
+  id            String       @id @default(uuid()) @db.Uuid
+  userId        String       @unique @db.Uuid
+  user          User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  displayName   String
+  headline      String
+  bio           String
+  domains       String[]
+  /// Entreprises ou secteurs dont le coach connaît le processus de recrutement.
+  knownProcesses String[]
+  city          String
+  /// Position publique du lieu de rendez-vous (pas le domicile).
+  lat           Float
+  lng           Float
+  offersVisio   Boolean      @default(true)
+  ratingAvg     Float        @default(0)
+  ratingCount   Int          @default(0)
+  status        ReviewStatus @default(PENDING)
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
+
+  offers   CoachOffer[]
+  bookings Booking[]
+
+  @@index([status, lat, lng])
+}
+
+model CoachOffer {
+  id          String       @id @default(uuid()) @db.Uuid
+  coachId     String       @db.Uuid
+  coach       CoachProfile @relation(fields: [coachId], references: [id], onDelete: Cascade)
+  title       String
+  description String?
+  durationMin Int
+  priceCents  Int
+  active      Boolean      @default(true)
+
+  bookings Booking[]
+
+  @@index([coachId])
+}
+
+model Booking {
+  id          String        @id @default(uuid()) @db.Uuid
+  studentId   String        @db.Uuid
+  student     User          @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  coachId     String        @db.Uuid
+  coach       CoachProfile  @relation(fields: [coachId], references: [id], onDelete: Cascade)
+  offerId     String        @db.Uuid
+  offer       CoachOffer    @relation(fields: [offerId], references: [id])
+  startsAt    DateTime
+  /// Durée et prix figés au moment de la réservation.
+  durationMin Int
+  priceCents  Int
+  mode        BookingMode
+  note        String?
+  status      BookingStatus @default(REQUESTED)
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+
+  @@index([studentId])
+  @@index([coachId, startsAt])
+}
+
+model Association {
+  id                 String       @id @default(uuid()) @db.Uuid
+  name               String
+  tagline            String
+  description        String
+  address            String
+  city               String
+  lat                Float
+  lng                Float
+  /// Cotisation annuelle indicative, en centimes.
+  membershipFeeCents Int?
+  websiteUrl         String?
+  needsVolunteers    Boolean      @default(false)
+  /// Clé des visuels (logo, bannière) embarqués dans l'application, en attendant le
+  /// téléversement par les associations elles-mêmes.
+  mediaKey           String?
+  status             ReviewStatus @default(PENDING)
+  createdAt          DateTime     @default(now())
+
+  events      Event[]
+  memberships MembershipRequest[]
+}
+
+/// Demande d'adhésion ou de bénévolat transmise à l'association (bouton « Adhérer »).
+model MembershipRequest {
+  id            String      @id @default(uuid()) @db.Uuid
+  userId        String      @db.Uuid
+  user          User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  associationId String      @db.Uuid
+  association   Association @relation(fields: [associationId], references: [id], onDelete: Cascade)
+  createdAt     DateTime    @default(now())
+
+  @@unique([userId, associationId])
+}
+
+model Event {
+  id            String       @id @default(uuid()) @db.Uuid
+  title         String
+  description   String
+  type          EventType
+  organizerName String
+  associationId String?      @db.Uuid
+  association   Association? @relation(fields: [associationId], references: [id], onDelete: SetNull)
+  startsAt      DateTime
+  endsAt        DateTime
+  venue         String
+  address       String
+  city          String
+  lat           Float
+  lng           Float
+  capacity      Int?
+  priceCents    Int          @default(0)
+  status        ReviewStatus @default(PENDING)
+  createdAt     DateTime     @default(now())
+
+  registrations EventRegistration[]
+
+  @@index([status, startsAt])
+}
+
+model EventRegistration {
+  id        String   @id @default(uuid()) @db.Uuid
+  userId    String   @db.Uuid
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  eventId   String   @db.Uuid
+  event     Event    @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+
+  @@unique([userId, eventId])
+  @@index([eventId])
+}
+
+model Deal {
+  id          String       @id @default(uuid()) @db.Uuid
+  partnerName String
+  category    DealCategory
+  title       String
+  description String
+  /// Avantage mis en avant, ex. « 80 € offerts ».
+  highlight   String?
+  url         String
+  city        String?
+  validUntil  DateTime?    @db.Date
+  status      ReviewStatus @default(PENDING)
+  createdAt   DateTime     @default(now())
+
+  clicks DealClick[]
+
+  @@index([status, category])
+}
+
+/// Clic sortant vers un partenaire : base de la facturation « au clic » et de l'anti-fraude.
+model DealClick {
+  id        String   @id @default(uuid()) @db.Uuid
+  dealId    String   @db.Uuid
+  deal      Deal     @relation(fields: [dealId], references: [id], onDelete: Cascade)
+  userId    String?  @db.Uuid
+  user      User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+  createdAt DateTime @default(now())
+
+  @@index([dealId, createdAt])
+}
+
+/// Ticket à usage unique émis après une connexion Google / LinkedIn réussie.
+/// L'application l'échange contre des jetons en prouvant qu'elle a lancé la connexion
+/// (elle doit fournir le secret dont `challenge` est l'empreinte SHA-256).
+model OAuthTicket {
+  id        String   @id @default(uuid()) @db.Uuid
+  tokenHash String   @unique
+  challenge String
+  userId    String   @db.Uuid
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+}

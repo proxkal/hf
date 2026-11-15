@@ -7,10 +7,6 @@ export interface MapPoint {
   lng: number;
   /** Texte lu par les lecteurs d'écran. */
   label: string;
-  /** Contenu du pin : initiales du coach, ou jour du mois pour un événement. */
-  badge: string;
-  /** Événement : mois abrégé affiché au-dessus du jour (« NOV »). */
-  caption?: string;
 }
 
 export interface MapProps {

@@ -14,7 +14,7 @@ import {
 import { TOULOUSE, useCoaches, useEvents, useMe } from '@/lib/queries';
 import { colors, fonts, radius, space, typeScale } from '@/theme';
 import { Card, Chip, ChipRow, Heading, Muted, Notice, P, QueryState, Screen, Tag } from '@/ui';
-import { Avatar, DateTile, dateParts, initials } from '@/ui/badges';
+import { Avatar, DateTile } from '@/ui/badges';
 import MapView from '@/ui/map';
 import { CoachPreview, EventPreview } from '@/ui/map-preview';
 import type { MapPoint } from '@/ui/map-types';
@@ -83,20 +83,14 @@ export default function Carte() {
         lat: c.lat,
         lng: c.lng,
         label: `Coach : ${c.displayName}, ${c.headline}`,
-        badge: initials(c.displayName),
       })),
-      ...eventList.map((e) => {
-        const { month, day } = dateParts(e.startsAt);
-        return {
-          id: e.id,
-          kind: 'event' as const,
-          lat: e.lat,
-          lng: e.lng,
-          label: `${EVENT_LABELS[e.type]} : ${e.title}, ${dateTime(e.startsAt)}`,
-          badge: day,
-          caption: month,
-        };
-      }),
+      ...eventList.map((e) => ({
+        id: e.id,
+        kind: 'event' as const,
+        lat: e.lat,
+        lng: e.lng,
+        label: `${EVENT_LABELS[e.type]} : ${e.title}, ${dateTime(e.startsAt)}`,
+      })),
     ],
     [coachList, eventList],
   );
@@ -378,24 +372,8 @@ const styles = StyleSheet.create({
   toolbarLabel: { ...typeScale.overline, color: colors.muted },
   legend: { flexDirection: 'row', alignItems: 'center', gap: space.md, flexWrap: 'wrap' },
   legendItem: { flexDirection: 'row', alignItems: 'center', gap: 6 },
-  legendCoach: {
-    width: 14,
-    height: 14,
-    borderRadius: 7,
-    borderWidth: 3,
-    borderColor: colors.blue,
-    backgroundColor: colors.white,
-  },
-  legendEvent: {
-    width: 14,
-    height: 14,
-    borderRadius: 3,
-    borderWidth: 1,
-    borderColor: colors.black,
-    borderTopWidth: 5,
-    borderTopColor: colors.blue,
-    backgroundColor: colors.white,
-  },
+  legendCoach: { width: 12, height: 12, borderRadius: 6, backgroundColor: colors.blue },
+  legendEvent: { width: 12, height: 12, borderRadius: 3, backgroundColor: colors.black },
   legendLabel: { fontFamily: fonts.medium, fontSize: 13, color: colors.black },
   legendHint: { fontSize: 13, lineHeight: 18 },
   section: { gap: 2, marginTop: space.sm },

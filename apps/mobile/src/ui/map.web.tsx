@@ -9,7 +9,7 @@ import {
 } from 'maplibre-gl';
 import { type CSSProperties, useCallback, useEffect, useRef, useState } from 'react';
 
-import { colors, fonts } from '@/theme';
+import { colors } from '@/theme';
 
 import type { MapPoint, MapProps } from './map-types';
 
@@ -54,37 +54,28 @@ const BLUE_HALO = 'rgba(0,10,255,.55)';
 /*
  * MapLibre positionne chaque pin (position absolue + `transform`) sur l'élément racine :
  * on n'y applique jamais `position`, `transform`, `scale` ni `translate`, qui décaleraient
- * le pin de son point géographique. Le pin survolé ou ouvert est signalé par un contour.
+ * le pin de son point géographique.
+ *
+ * Pins façon Uber : un petit point de 14 px. La zone cliquable (le bouton, transparent)
+ * fait 28 px pour rester facile à viser ; seul le point intérieur grossit au survol.
  */
 const CSS = `
-.hp{display:flex;align-items:center;justify-content:center;padding:0;border:0;
-  cursor:pointer;background:none;font-family:${fonts.bodyBold},system-ui,sans-serif;
-  transition:box-shadow .15s ease}
+.hp{width:28px;height:28px;display:flex;align-items:center;justify-content:center;padding:0;
+  border:0;cursor:pointer;background:none}
 .hp:hover,.hp--active{z-index:3}
-.hp--coach:hover,.hp--coach.hp--active{box-shadow:0 0 0 3px #fff,0 0 0 5px #000,0 6px 16px rgba(0,0,0,.3)}
-.hp--event:hover,.hp--event.hp--active{box-shadow:0 0 0 3px #fff,0 0 0 5px ${colors.blue},0 6px 16px rgba(0,0,0,.3)}
-.hp:focus-visible{outline:3px solid #000;outline-offset:3px;border-radius:999px}
-.hp--coach{width:44px;height:44px;border-radius:50%;background:${colors.blue};
-  box-shadow:0 4px 12px rgba(0,0,0,.22)}
-.hp--coach::after{content:'';position:absolute;inset:0;border-radius:50%;
-  animation:hp-pulse 2.2s ease-out infinite;pointer-events:none}
-.hp--coach.hp--active::after{animation:none}
-.hp-avatar{width:36px;height:36px;border-radius:50%;background:#fff;color:#000;display:flex;
-  align-items:center;justify-content:center;font-size:13px;letter-spacing:.3px}
-.hp--coach.hp--active{background:#000}
-.hp--coach.hp--active .hp-avatar{background:${colors.blue};color:#fff}
-.hp--event{width:42px;flex-direction:column;border-radius:10px;overflow:visible;background:#fff;
-  border:1px solid #000;box-shadow:0 4px 12px rgba(0,0,0,.22)}
-.hp--event::before{content:'';position:absolute;bottom:-7px;left:50%;width:12px;height:12px;
-  background:#fff;border-right:1px solid #000;border-bottom:1px solid #000;
-  transform:translateX(-50%) rotate(45deg);border-radius:0 0 2px 0}
-.hp-month{border-radius:9px 9px 0 0}
-.hp-month{width:100%;border-radius:10px 10px 0 0;background:${colors.blue};color:#fff;
-  font-size:9px;letter-spacing:1px;line-height:15px;text-align:center;position:relative}
-.hp-day{color:#000;font-size:17px;line-height:24px;position:relative}
-.hp--event.hp--active .hp-month{background:#000}
-@keyframes hp-pulse{0%{box-shadow:0 0 0 0 ${BLUE_HALO}}100%{box-shadow:0 0 0 14px rgba(0,10,255,0)}}
-@media (prefers-reduced-motion: reduce){.hp--coach::after{animation:none}.hp{transition:none}}.maplibregl-ctrl-group{border-radius:12px!important;box-shadow:0 2px 10px rgba(0,0,0,.15)!important}
+.hp:focus-visible{outline:2px solid #000;outline-offset:1px;border-radius:999px}
+.hp-dot{position:relative;width:14px;height:14px;border:2.5px solid #fff;box-sizing:border-box;
+  box-shadow:0 1px 4px rgba(0,0,0,.35);transition:width .15s ease,height .15s ease}
+.hp--coach .hp-dot{border-radius:50%;background:${colors.blue}}
+.hp--event .hp-dot{border-radius:4px;background:#000}
+.hp:hover .hp-dot,.hp--active .hp-dot{width:20px;height:20px;border-width:3px;
+  box-shadow:0 0 0 2px ${colors.blue}55,0 2px 8px rgba(0,0,0,.35)}
+.hp--coach .hp-dot::after{content:'';position:absolute;inset:-2.5px;border-radius:50%;
+  animation:hp-pulse 2.4s ease-out infinite;pointer-events:none}
+.hp--active .hp-dot::after{animation:none}
+@keyframes hp-pulse{0%{box-shadow:0 0 0 0 ${BLUE_HALO}}100%{box-shadow:0 0 0 9px rgba(0,10,255,0)}}
+@media (prefers-reduced-motion: reduce){.hp-dot::after{animation:none!important}.hp-dot{transition:none}}
+.maplibregl-ctrl-group{border-radius:12px!important;box-shadow:0 2px 10px rgba(0,0,0,.15)!important}
 `;
 
 /** Délai avant de masquer l'aperçu quand la souris quitte un pin (le temps d'atteindre la carte). */
@@ -97,30 +88,19 @@ const TOP_MARGIN = 64;
 /** Distance minimale entre un pin ouvert et les bords bas / latéraux de la carte. */
 const EDGE = 44;
 /** Écart entre le pin et l'aperçu quand celui-ci s'ouvre en dessous. */
-const BELOW_GAP = 30;
-/** Distance entre le point géographique et le haut du pin (le pin événement est ancré par sa pointe). */
-const pinOffset = (point: MapPoint) => (point.kind === 'event' ? 62 : 32);
+const BELOW_GAP = 18;
+/** Distance entre le point géographique et le bas de l'aperçu ouvert au-dessus. */
+const PIN_GAP = 18;
 
 function buildPin(point: MapPoint) {
   const element = document.createElement('button');
   element.type = 'button';
   element.className = `hp hp--${point.kind}`;
-  // textContent / aria-label uniquement : jamais de innerHTML avec des données de l'API.
+  // aria-label uniquement : jamais de innerHTML avec des données de l'API.
   element.setAttribute('aria-label', point.label);
-  if (point.kind === 'coach') {
-    const avatar = document.createElement('span');
-    avatar.className = 'hp-avatar';
-    avatar.textContent = point.badge;
-    element.appendChild(avatar);
-  } else {
-    const month = document.createElement('span');
-    month.className = 'hp-month';
-    month.textContent = point.caption ?? '';
-    const day = document.createElement('span');
-    day.className = 'hp-day';
-    day.textContent = point.badge;
-    element.append(month, day);
-  }
+  const dot = document.createElement('span');
+  dot.className = 'hp-dot';
+  element.appendChild(dot);
   return element;
 }
 
@@ -243,7 +223,7 @@ export default function MapView({
         setHoverId(point.id);
       });
       element.addEventListener('blur', scheduleHide);
-      const marker = new Marker({ element, anchor: point.kind === 'event' ? 'bottom' : 'center' })
+      const marker = new Marker({ element, anchor: 'center' })
         .setLngLat([point.lng, point.lat])
         .addTo(instance);
       markers.current.set(point.id, { marker, element });
@@ -284,7 +264,7 @@ export default function MapView({
     const width = element.clientWidth;
     const height = element.clientHeight;
     // +6 px de marge de sécurité (arrondis de projection).
-    const minY = TOP_MARGIN + 6 + pinOffset(point) + previewHeight;
+    const minY = TOP_MARGIN + 6 + PIN_GAP + previewHeight;
     const targetY = Math.min(Math.max(y, minY), height - EDGE);
     const targetX = Math.min(Math.max(x, EDGE), width - EDGE);
     if (Math.abs(targetY - y) > 1 || Math.abs(targetX - x) > 1) {
@@ -305,7 +285,7 @@ export default function MapView({
     const { x, y, w: width, h: height } = anchor;
     const half = Math.min(PREVIEW_WIDTH, width - 2 * MARGIN) / 2;
     const left = Math.max(half + MARGIN, Math.min(width - half - MARGIN, x));
-    const above = y - pinOffset(previewPoint) - previewHeight;
+    const above = y - PIN_GAP - previewHeight;
     const below = y + BELOW_GAP;
     // Au-dessus si possible, sinon en dessous, sinon calé dans la carte.
     const top =
